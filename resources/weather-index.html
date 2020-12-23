@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0'></script>
+</head>
+<body>
+  <canvas id='myChart'></canvas>
+
+<script>
+console.info('console message');
+var ctx = document.getElementById('myChart').getContext('2d');
+let chart = null;
+window.addEventListener('load', e => {
+  console.info('document loaded');
+  fetch('/weather/chart-data').then(x => x.json()).then(j => {
+    chart = new Chart('myChart', j);
+  });
+});
+</script>
+</body>
+<html>
