@@ -1,4 +1,4 @@
-#!/usr/bin/env bb
+#!/usr/bin/env bb32m
 (ns user
   (:require [org.httpkit.server :as server]))
 
