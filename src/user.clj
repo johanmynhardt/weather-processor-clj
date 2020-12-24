@@ -86,6 +86,7 @@
                  :humidity "rgba(255,255,153,0.5)"}]
 
     {:type "bar"
+     :latest (last records)
      :data
      {:labels labels
       :datasets

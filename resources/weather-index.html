@@ -4,33 +4,83 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
     <style>
-     nav {
+     nav>* {
+         margin: 0.2em;
+     }
 
+     .button {
+         border: 0px;
+         padding: 0.4em;
+     }
+
+     .primary {
+         background-color: #3383FF;
+         color: white;
+     }
+
+     .rounded {
+         border-radius: 0.3em;
+     }
+
+     .shadow {
+         box-shadow: 0px 0px 3px black;
+     }
+
+     .navData {
+         border: 0;
+         border-radius: 0.3em;
+         padding: 3px;
+         box-shadow: 0px 0px 3px black;
+     }
+
+     .navData > code {
+         font-size: larger;
      }
     </style>
 </head>
 
 <body>
     <nav>
-        <button data-btn-event="reload">Reload</button>
+        <button class="primary button rounded shadow" data-btn-event="reload">Reload</button>
+        <span>Latest:</span>
+        <span class="navData">Temp.: <code data-temp>--</code> &deg;C</span>
+        <span class="navData">Humid.: <code data-humid>--</code> %</span>
+        <span class="navData">Press.: <code data-pressure>--</code> hPa</span>
+        <span class="navData">Rain: <code data-rain>--</code> mm/h</span>
     </nav>
     <canvas id="myChart"></canvas>
 
     <script>
         console.info('console message');
-        var ctx = document.getElementById('myChart').getContext('2d');
+     var ctx = document.getElementById('myChart').getContext('2d');
+     let latest = null;
         let chart = null;
         window.addEventListener('load', e => {
             console.info('document loaded');
             fetch('/weather/chart-data').then(x => x.json()).then(j => {
                 chart = new Chart('myChart', j);
+                latest = j.latest;
+                updateNavData(latest);
             });
         });
+
+     const updateNavData = dat => {
+         let f = (sel, v) => {
+             document.querySelector(sel).innerText = v;
+         };
+
+         f('code[data-rain]', dat.rain);
+         f('code[data-pressure]', dat.main.pressure);
+         f('code[data-humid]', dat.main.humidity);
+         f('code[data-temp]', dat.main.temp);
+     };
 
      document.addEventListener('click', e => {
             if (e.target.dataset.btnEvent === 'reload') {
                 fetch('/weather/chart-data').then(x => x.json()).then(j => {
                     chart.data = j.data;
+                    latest = j.latest;
+                    updateNavData(latest);
                     chart.update();
                 });
             }
