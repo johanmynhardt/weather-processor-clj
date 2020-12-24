@@ -78,41 +78,46 @@
         temperature (extract #(get-in % [:main :temp]))
         humidity (extract #(get-in % [:main :humidity]))
         rain (extract :rain)
-        pressure (extract #(get-in % [:main :pressure]))]
+        pressure (extract #(get-in % [:main :pressure]))
+
+        colours {:rain "rgba(0, 0, 255, 0.5)"
+                 :pressure "rgba(100,100,100,0.5)"
+                 :temp "rgba(255,165,0,0.5)"
+                 :humidity "rgba(255,255,153,0.5)"}]
 
     {:type "bar"
      :data
      {:labels labels
       :datasets
       [{:label "Temperature"
-        :backgroundColor "rgba(255,165,0, 0.5)"
+        :backgroundColor (:temp colours)
         :data temperature
         :type "line"
         :yAxisID "other-y-axis"}
 
        {:label "Humidity"
-        :backgroundColor "rgba(255,255,153, 0.5)"
+        :backgroundColor (:humidity colours)
         :data humidity
         :type "line"
         :yAxisID "other-y-axis"}
 
        {:label "Pressure"
-        :backgroundColor "rgba(100, 100, 100, 0.5)"
+        :backgroundColor (:pressure colours)
         :data pressure
         :type "line"
         :yAxisID "1100-y-axis"}
 
        {:label "Rain Rate"
-        :backgroundColor "rgba(0, 0, 255, 0.5)"
+        :backgroundColor (:rain colours)
         :data rain
         :yAxisID "rain-y-axis"}]}
 
      :options
      {:scales
       {:yAxes
-       [{:id "rain-y-axis" :type "linear" :position "right"}
-        {:id "1100-y-axis" :type "linear" :position "right"}
-        {:id "other-y-axis" :type "linear" :position "left"}]}}}))
+       [{:id "rain-y-axis" :type "linear" :position "right" :gridLines {:color (:rain colours)} :ticks {:min 0} :scaleLabel {:display true :labelString "Rain"}}
+        {:id "1100-y-axis" :type "linear" :position "right" :gridLines {:color (:pressure colours)} :ticks {:min (- (apply min pressure) 1) :max (+ (apply max pressure) 1)} :scaleLabel {:display true :labelString "Pressure"}}
+        {:id "other-y-axis" :type "linear" :position "left" :gridLines {:color (:temp colours)} :ticks {:max 100} :scaleLabel {:display true :labelString "Humidity/Temperature"}}]}}}))
 
 (defn my-handler [{:keys [uri] :as req}]
   (condp = uri
