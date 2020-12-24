@@ -1,21 +1,40 @@
 <!doctype html>
 <html>
-<head>
-<script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0'></script>
-</head>
-<body>
-  <canvas id='myChart'></canvas>
 
-<script>
-console.info('console message');
-var ctx = document.getElementById('myChart').getContext('2d');
-let chart = null;
-window.addEventListener('load', e => {
-  console.info('document loaded');
-  fetch('/weather/chart-data').then(x => x.json()).then(j => {
-    chart = new Chart('myChart', j);
-  });
-});
-</script>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <style>
+     nav {
+
+     }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <button data-btn-event="reload">Reload</button>
+    </nav>
+    <canvas id="myChart"></canvas>
+
+    <script>
+        console.info('console message');
+        var ctx = document.getElementById('myChart').getContext('2d');
+        let chart = null;
+        window.addEventListener('load', e => {
+            console.info('document loaded');
+            fetch('/weather/chart-data').then(x => x.json()).then(j => {
+                chart = new Chart('myChart', j);
+            });
+        });
+
+     document.addEventListener('click', e => {
+            if (e.target.dataset.btnEvent === 'reload') {
+                fetch('/weather/chart-data').then(x => x.json()).then(j => {
+                    chart.data = j.data;
+                    chart.update();
+                });
+            }
+        });
+    </script>
 </body>
 <html>
