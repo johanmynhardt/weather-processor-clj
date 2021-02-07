@@ -1,0 +1,4 @@
+{:path ["src" "resources"]
+
+ :deps
+ {com.brunobonacci/mulog {:mvn/version "0.6.4"}}}
