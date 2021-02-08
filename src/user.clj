@@ -1,10 +1,25 @@
 #!/usr/bin/env bb32m
 (ns user
-  (:require [org.httpkit.server :as server]))
+  (:require [org.httpkit.server :as server]
+            [clojure.string :as str]))
 
-(def data-dir (or (System/getenv "DATA_DIR") (System/getProperty "user.dir")))
+(defn log [event-key & {:keys [message human-readable?] :as kvs}]
+  (let [event {:event event-key
+               :ts (System/currentTimeMillis)}]
+    (if human-readable?
+      (do (prn (merge event (dissoc kvs :message)))
+          (println (->> message
+                        str/split-lines
+                        (map (fn [line] (str ";; " line)))
+                        (str/join \newline))))
+      (prn (->> kvs
+                (into event))))))
 
-(println "data-dir: " data-dir)
+(def data-dir
+  (or (System/getenv "DATA_DIR")
+      (System/getProperty "user.dir")))
+
+(log ::startup :data-dir data-dir)
 
 (def base-dir (System/getProperty "user.dir"))
 
@@ -36,7 +51,7 @@
   (atom {:updated nil :records nil}))
 
 (defn update-records []
-  (println "Updating cache @" (java.util.Date. (System/currentTimeMillis)))
+  (log ::update-records :message "Updating cache.")
   (let [lines (->> data-file slurp str/split-lines (remove empty?))]
     (reset! records-cache
             {:updated (System/currentTimeMillis)
@@ -116,9 +131,17 @@
      :options
      {:scales
       {:yAxes
-       [{:id "rain-y-axis" :type "linear" :position "right" :gridLines {:color (:rain colours)} :ticks {:min 0} :scaleLabel {:display true :labelString "Rain"}}
-        {:id "1100-y-axis" :type "linear" :position "right" :gridLines {:color (:pressure colours)} :ticks {:min (- (apply min pressure) 1) :max (+ (apply max pressure) 1)} :scaleLabel {:display true :labelString "Pressure"}}
-        {:id "other-y-axis" :type "linear" :position "left" :gridLines {:color (:temp colours)} :ticks {:max 100} :scaleLabel {:display true :labelString "Humidity/Temperature"}}]}}}))
+       [{:id "rain-y-axis" :type "linear" :position "right"
+         :gridLines {:color (:rain colours)} :ticks {:min 0} :scaleLabel {:display true :labelString "Rain"}}
+
+        {:id "1100-y-axis" :type "linear" :position "right"
+         :gridLines {:color (:pressure colours)}
+         :ticks {:min (- (apply min pressure) 1) :max (+ (apply max pressure) 1)}
+         :scaleLabel {:display true :labelString "Pressure"}}
+
+        {:id "other-y-axis" :type "linear" :position "left"
+         :gridLines {:color (:temp colours)} :ticks {:max 100}
+         :scaleLabel {:display true :labelString "Humidity/Temperature"}}]}}}))
 
 (defn my-handler [{:keys [uri] :as req}]
   (condp = uri
@@ -132,15 +155,9 @@
      :body (weather-index)}
 
     "/weather/chart-data"
-    (let [records (process-dates)
-          labels (->> records (map :date) vec)
-          data (->> records (map #(get-in % [:main :temp])) vec)
-          humidity (->> records (map #(get-in % [:main :humidity])) vec)
-          rain (->> records (map :rain) vec)
-          pressure (->> records (map #(get-in % [:main :pressure])) vec)]
-      {:status 200
-       :headers {"content-type" "application/json"}
-       :body (-> (chart-data) json/generate-string)})
+    {:status 200
+     :headers {"content-type" "application/json"}
+     :body (-> (chart-data) json/generate-string)}
 
     #_else
     {:status 200
@@ -160,14 +177,14 @@
 (def ctx (atom {:server nil}))
 
 (defn start-server []
-  (println "start server...")
+  (log ::start-server :message "Starting server...")
   (swap! ctx assoc
          :server
          (server/run-server #'app {:legacy-return-value? false})))
 
 (defn stop-server []
   (when-not (nil? (:server @ctx))
-    (println "\nstopping server...")
+    (log ::stop-server :message "Stopping server...")
     (server/server-stop! (:server @ctx))
     (swap! ctx assoc :server nil)))
 
@@ -176,10 +193,10 @@
       (.addShutdownHook
        (Thread.
         #(do (stop-server)
-             (println "bye")))))
-  (print banner)
+             (log ::exit :message "bye")))))
+  (log ::main :message banner :human-readable? true)
   (start-server)
-  (println "running!")
+  (log ::main :message "running!")
   (while true
     (Thread/sleep 10000)))
 
